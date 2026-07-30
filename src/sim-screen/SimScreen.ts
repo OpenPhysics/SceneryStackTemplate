@@ -5,10 +5,10 @@
  * factories and passes screen-level options (name, background color, tandem)
  * to the parent Screen class.
  *
- * For multi-screen simulations, duplicate this file (e.g. IntroScreen.ts,
- * LabScreen.ts), add each screen to the screens array in src/main.ts, and put
- * shared create*Icon() factories in src/common/{SimName}ScreenIcons.ts (see
- * doc/multi-screen.md).
+ * For multi-screen simulations, run `npm run scaffold-screens` (preferred) or
+ * duplicate this file (e.g. IntroScreen.ts, LabScreen.ts), add each screen to the
+ * screens array in src/main.ts, and put shared create*Icon() factories in
+ * src/common/{SimName}ScreenIcons.ts (see doc/multi-screen.md).
  */
 import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import type { ScreenOptions } from "scenerystack/sim";

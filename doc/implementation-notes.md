@@ -34,22 +34,26 @@ integrates physics; the model never imports scenery.
 
 ## Forking checklist
 
-### Automated rename (recommended)
+### Automated rename + scaffold (recommended)
 
 ```sh
 npm run rename -- --id my-sim --name "My Simulation"
+npm run scaffold-screens -- --screens Intro,Lab   # or omit --screens for one screen
 npm run check
 ```
 
-`scripts/rename-sim.ts` replaces template identifiers in file contents and renames files/folders.
+Or from the workspace: `Baton/scripts/create-sim.sh --repo MySim --name "My Simulation"`.
 
-### Manual steps (after rename or if skipping the script)
+`scripts/rename-sim.ts` updates sim-level identifiers (package id, Colors, Preferences).
+`scripts/scaffold-screens.ts` emits fleet-named screen folders and wires main/strings/icons.
+
+### Manual steps (after rename/scaffold or if skipping the scripts)
 
 1. **`doc/model.md`** — educator physics (equations, ranges, simplifications).
 2. **`doc/implementation-notes.md`** — this file, rewritten for your architecture.
-3. **`SimModel`** — real Properties, `step(dt)`, `reset()`; compose `TimeModel` if animated.
-4. **`SimScreenView`** — play area + controls; wire `ResetAllButton` to `model.reset()`.
-5. **`SimColors.ts`** — sim palette (default + projector profiles).
+3. **Screen model(s)** — real Properties, `step(dt)`, `reset()`; compose `TimeModel` if animated.
+4. **Screen view(s)** — play area + controls; wire `ResetAllButton` to `model.reset()`.
+5. **`*Colors.ts`** — sim palette (default + projector profiles).
 6. **Locale JSON** — title, strings, `a11y` keys; register locales in `init.ts`.
 7. **`public/icons/icon.svg`** → `npm run icons`; align theme color in `index.html` / vite config.
 8. **`tests/setup.ts`** — `init({ name: … })` must match `package.json` name after rename.

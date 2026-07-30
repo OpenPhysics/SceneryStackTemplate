@@ -2,8 +2,10 @@
 /**
  * scripts/rename-sim.ts
  *
- * Renames the sim template for a new simulation. Replaces all template
- * identifiers in file contents, then renames files and directories.
+ * Renames the sim template for a new simulation at the **sim** level
+ * (package id, display name, Colors/Namespace/Preferences). Screen packages
+ * stay as `src/sim-screen/` with `Sim*` class names so
+ * `npm run scaffold-screens` can emit N fleet-named screen folders afterward.
  *
  * Usage:
  *   npm run rename -- --id <kebab-id> --name "<Display Name>"
@@ -20,8 +22,8 @@
  *   npm run rename -- --id my-sim --name "My Simulation" --prefix MySim
  *
  * After running:
- *   npm run check        ← verify TypeScript is clean
- *   git diff --stat      ← review all changes
+ *   npm run scaffold-screens -- --screens Intro,Lab   ← or omit for single screen
+ *   npm run check
  */
 
 import { readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
@@ -61,30 +63,30 @@ const ROOT = resolve(process.cwd());
 
 // ── Skip lists ────────────────────────────────────────────────────────────────
 
-const SKIP_DIRS = new Set([".git", "node_modules", "dist", ".cache", ".vite"]);
+const SKIP_DIRS = new Set([".git", "node_modules", "dist", ".cache", ".vite", "scripts"]);
 const TEXT_EXTS = new Set([".ts", ".js", ".json", ".html", ".md", ".css", ".svg", ".txt", ".webmanifest", ".toml"]);
 
 // ── Content replacements ──────────────────────────────────────────────────────
-// Longer, more-specific strings must come first to avoid partial matches.
+// Sim-level only. Screen classes (SimScreen, SimModel, …) and `sim-screen/` are
+// left for scaffold-screens. Longer strings must come first to avoid partial matches.
 
 const REPLACEMENTS: ReadonlyArray<[string, string]> = [
-  // Class names (longest first to avoid prefix collisions)
-  ["SimScreenSummaryContent", `${newPrefix}ScreenSummaryContent`],
-  ["SimKeyboardHelpContent", `${newPrefix}KeyboardHelpContent`],
+  // Shared / preferences (not per-screen)
   ["SimPreferencesModel", `${newPrefix}PreferencesModel`],
   ["SimPreferencesNode", `${newPrefix}PreferencesNode`],
-  ["SimScreenView", `${newPrefix}ScreenView`],
   ["SimColors", `${newPrefix}Colors`],
   ["SimNamespace", `${newPrefix}Namespace`],
-  ["SimScreen", `${newPrefix}Screen`],
-  ["SimModel", `${newPrefix}Model`],
   // camelCase identifier
   ["simQueryParameters", `${newCamel}QueryParameters`],
-  // Display strings
+  // Display strings (all locales + PWA)
   ["Sim Template", newName],
-  // Kebab identifiers (path segments and package name)
+  ["Plantilla de Simulación", newName],
+  ["Modèle de Simulation", newName],
+  ["SimTemplate", newPrefix],
+  ["A SceneryStack single-screen simulation template.", `A SceneryStack simulation: ${newName}.`],
+  ["A single-screen SceneryStack simulation template", `A SceneryStack simulation: ${newName}`],
+  // Kebab package id
   ["sim-template", newId],
-  ["sim-screen", `${newId}-screen`],
 ];
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -160,6 +162,7 @@ console.log(`  id:     sim-template → ${newId}`);
 console.log(`  name:   Sim Template → ${newName}`);
 console.log(`  prefix: Sim          → ${newPrefix}`);
 console.log(`  camel:  sim          → ${newCamel}`);
+console.log("  (screen packages left as sim-screen/ for scaffold-screens)");
 console.log("");
 
 console.log("Pass 1: updating file contents…");
@@ -175,9 +178,8 @@ for (const { from, to } of ops) {
 
 console.log("\nDone.");
 console.log("\nNext steps:");
-console.log('  1. Update the "screens" key in strings_en.json (and other locales)');
-console.log('     if you want a per-screen identifier other than "sim".');
-console.log("  2. Update StringManager.getScreenNames() to match the JSON key.");
-console.log("  3. npm run check        ← verify TypeScript is clean");
-console.log("  4. git diff --stat      ← review all changes");
-console.log("  5. Update doc/implementation-notes.md for your simulation.");
+console.log("  1. npm run scaffold-screens -- --screens Intro,Lab");
+console.log("     (omit --screens to use one screen named after the sim)");
+console.log("  2. npm run check");
+console.log("  3. git diff --stat");
+console.log("  4. Update doc/implementation-notes.md for your simulation.");

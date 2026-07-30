@@ -5,8 +5,9 @@ Sim-specific context for AI assistants. General SceneryStack guidance: [OpenPhys
 ## Project
 
 Reusable single-screen SceneryStack template and **canonical accessibility reference** for
-OpenPhysics sims. Run `npm run rename` to fork it to a new sim name automatically. For
-multi-screen sims, see [`doc/multi-screen.md`](doc/multi-screen.md).
+OpenPhysics sims. Prefer `Baton/scripts/create-sim.sh` (or GitHub **Use this template** +
+`npm run rename` + `npm run scaffold-screens`) to fork it. For multi-screen sims, see
+[`doc/multi-screen.md`](doc/multi-screen.md).
 
 ## Key files
 
@@ -25,7 +26,8 @@ multi-screen sims, see [`doc/multi-screen.md`](doc/multi-screen.md).
 | `src/common/SimButtonOptions.ts` | Flat button-appearance option bundles + light-control-surface combo-box options |
 | `src/common/TimeModel.ts` | Composable play/pause + elapsed-time model for animated sims |
 | `scripts/generate-icons.ts` | PNG icons from `public/icons/icon.svg` |
-| `scripts/rename-sim.ts` | Automated fork/rename across all files and folders |
+| `scripts/rename-sim.ts` | Sim-level fork/rename (package id, Colors, Preferences) |
+| `scripts/scaffold-screens.ts` | Emit N screen packages + wire main/strings/icons |
 
 ## Common components
 
@@ -138,37 +140,48 @@ npm run lint && npm run check && npm run build && npm test
 | `npm run test:fuzz` | Playwright fuzz smoke |
 | `npm run test:fuzz:quick` | 10s fuzz |
 | `npm run icons` | Regenerate PWA icons |
-| `npm run rename` | Automated fork/rename (`--id`, `--name`) |
+| `npm run rename` | Sim-level fork/rename (`--id`, `--name`) |
+| `npm run scaffold-screens` | Emit N screens (`--screens Intro,Lab`) |
 
 ## Customizing a new sim from this template
 
-### Automated rename (recommended)
+### Recommended: Baton create-sim
 
 ```sh
-npm run rename -- --id friction --name "Friction"
-# or for multi-word names:
-npm run rename -- --id wave-interference --name "Wave Interference"
+Baton/scripts/create-sim.sh --repo Friction --name "Friction" --screens Intro,Lab --shared-model --onboard
 ```
 
-This replaces all template identifiers in file contents and renames files/folders. Run
-`npm run check` afterwards to verify TypeScript is clean.
+### Manual: GitHub template + rename + scaffold
 
-### Manual checklist (if not using the rename script)
+```sh
+npm install
+npm run rename -- --id friction --name "Friction"
+npm run scaffold-screens -- --screens Intro,Lab --shared-model
+# omit --screens for one screen named after the sim; omit --shared-model for independent models
+npm run check
+```
 
-1. **Rename** — replace `sim-template` / `Sim Template` / `Sim` prefix in `init.ts`, `brand.ts`, `package.json`, class names, and screen folders
-2. **Locale** — add `strings_XX.json`, register in `StringManager`, add locale to `init.ts` `availableLocales`
-3. **Icon** — edit `public/icons/icon.svg`, run `npm run icons`; match theme color in `index.html` / `vite.config.ts`
-4. **Colors** — edit `SimColors.ts` (`default` + `projector` profiles per property)
+`rename` updates package id, display name, Colors/Namespace/Preferences. `scaffold-screens`
+owns screen folders (fleet naming: `src/intro/`, not `intro-screen/`).
+
+### Manual checklist (if not using the scripts)
+
+1. **Rename** — replace `sim-template` / `Sim Template` / `Sim` prefix in `init.ts`, `brand.ts`, `package.json`, Colors/Namespace/Preferences
+2. **Screens** — run `scaffold-screens` or mirror `sim-screen/` into kebab folders
+3. **Locale** — add `strings_XX.json`, register in `StringManager`, add locale to `init.ts` `availableLocales`
+4. **Icon** — edit `public/icons/icon.svg`, run `npm run icons`; match theme color in `index.html` / `vite.config.ts`
+5. **Colors** — edit `*Colors.ts` (`default` + `projector` profiles per property)
 
 ## Multi-screen sims
 
 Full guide: [`doc/multi-screen.md`](doc/multi-screen.md)
 
 Summary:
-- Create a new screen folder mirroring `src/sim-screen/` for each screen
-- Add screen-name keys to all locale JSON files
-- Expose new `StringProperty` getters in `StringManager.getScreenNames()`
-- For shared state, create a root model passed to each per-screen model
+- Prefer `npm run scaffold-screens -- --screens Intro,Lab` (add `--shared-model` for a root model)
+- Or create a screen folder mirroring `src/sim-screen/` for each screen (kebab names, no `-screen` suffix)
+- Add screen-name keys to all locale JSON files; nest `a11y` per screen
+- Expose new getters in `StringManager.getScreenNames()` / `get{Screen}A11yStrings()`
+- Shared state: `--shared-model` → `common/model/SharedModel.ts` composed per screen (rename to a domain type)
 - Add `src/common/{SimName}ScreenIcons.ts` with `create{Screen}Icon()` factories; wire `homeScreenIcon` + `navigationBarIcon` on each Screen
 - Register all screens in the `screens` array in `main.ts`
 
@@ -176,13 +189,13 @@ Summary:
 
 | Approach | When to use |
 |---|---|
-| **GitHub template** ("Use this template" button) | Starting a single new sim |
-| `npm run rename` after cloning | Same, automated |
+| **`Baton/scripts/create-sim.sh`** | Agents / fleet — create repo, rename, scaffold N screens |
+| **GitHub template** ("Use this template") | Humans starting a sim in the browser |
+| `npm run rename` + `scaffold-screens` | Same, after cloning the template |
 | **npm workspace / monorepo** | Managing a suite of sims with shared tooling |
-| **`npm create` scaffolder** | Org-wide standardized sim bootstrapping |
 | **git subtree** for pulling updates | Keeping forks in sync with template improvements |
 
-See `doc/multi-screen.md` → "Using this template beyond a direct copy" for details on each approach.
+See `doc/multi-screen.md` → "Using this template beyond a direct copy" for details.
 
 ## PWA
 

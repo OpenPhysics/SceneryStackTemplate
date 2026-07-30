@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "A SceneryStack single-screen simulation template.",
+  "description": "GitHub template for OpenPhysics SceneryStack sims (rename + scaffold-screens for one or N screens).",
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
@@ -36,6 +36,7 @@
     "test:fuzz:quick": "FUZZ_DURATION=10 playwright test --project=chromium",
     "icons": "tsx scripts/generate-icons.ts",
     "rename": "tsx scripts/rename-sim.ts",
+    "scaffold-screens": "tsx scripts/scaffold-screens.ts",
     "clean": "rm -rf dist",
     "prepare": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
   },

@@ -1,8 +1,38 @@
 # Multi-Screen Simulations
 
-This template ships as a **single-screen** simulation. Many physics simulations
-expose multiple conceptual modes — "Intro" + "Lab", "Basics" + "Advanced", etc.
-This guide shows how to extend the template to two or more screens.
+This template ships as a **single-screen** prototype (`src/sim-screen/`). New sims
+should call `npm run scaffold-screens` (or `Baton/scripts/create-sim.sh`) so screen
+folders use fleet naming (`src/intro/`, not `intro-screen/`). This guide covers the
+architecture and how to extend an existing sim by hand.
+
+---
+
+## Automated scaffold (preferred)
+
+After `npm run rename` (or via `create-sim.sh`):
+
+```sh
+# One screen named after the sim (default when --screens is omitted)
+npm run scaffold-screens
+
+# N screens — titles, or kebab:Title pairs
+npm run scaffold-screens -- --screens Intro,Lab
+npm run scaffold-screens -- --screens intro:Intro,"series-rlc:Series RLC"
+
+# Shared helpers under common/model/ (fleet style)
+npm run scaffold-screens -- --screens Intro,Lab --shared-model
+```
+
+The scaffolder:
+
+1. Copies the `sim-screen/` prototype into `src/<kebab>/` per screen
+2. Writes `src/common/{Prefix}ScreenIcons.ts` stubs and wires icons on each Screen
+3. Updates `main.ts`, locale JSON (`screens` + nested `a11y`), and `StringManager`
+4. Removes the prototype `sim-screen/` folder
+
+Independent models by default. Pass `--shared-model` to emit
+`src/common/model/SharedModel.ts` and compose it into each screen model
+(see [Shared model](#shared-model) below).
 
 ---
 
@@ -33,20 +63,31 @@ main.ts
        └─ LabScreenView
 ```
 
-### Multi-screen with shared model (recommended for real sims)
+### Multi-screen with shared helpers (fleet style)
 
-A top-level "root model" owns shared state (e.g. selected material, common
-parameters). Each screen model receives a reference to it.
+Put reusable physics in `src/common/model/` under a **domain** name. Each screen
+model composes its own instance — code is shared, live state usually is not:
 
 ```
-main.ts  →  creates FrictionModel (shared)
-  ├─ IntroScreen    receives FrictionModel → IntroModel(frictionModel)
-  └─ LabScreen      receives FrictionModel → LabModel(frictionModel)
+common/model/RlcCircuitModel.ts   (or SkyModel, TimeMaster, …)
+main.ts
+  ├─ IntroScreen → IntroModel { circuit = new RlcCircuitModel() }
+  └─ LabScreen   → LabModel   { circuit = new RlcCircuitModel() }
 ```
+
+### Multi-screen with one live shared instance (optional)
+
+When screens must mutate the **same** Properties, construct once in `main.ts`
+and pass the instance into each Screen/Model. Prefer domain names in
+`common/model/` — there is no `*RootModel` and no top-level `src/model/`
+(see Baton CONVENTIONS).
 
 ---
 
-## Step-by-step: adding a second screen
+## Step-by-step: adding a second screen by hand
+
+Prefer `npm run scaffold-screens` when creating the sim. Use this section when
+growing an already-scaffolded sim.
 
 ### 1 — Add strings
 
@@ -83,13 +124,14 @@ public getScreenNames(): {
 
 ### 3 — Create the second screen folder
 
-Mirror the structure of `src/sim-screen/`:
+Mirror the structure of an existing screen package. Fleet convention: **kebab
+folder names without a `-screen` suffix**:
 
 ```
 src/
 ├─ common/
 │   └─ FrictionScreenIcons.ts   # createIntroIcon(), createLabIcon(), …
-├─ intro-screen/
+├─ intro/
 │   ├─ IntroScreen.ts
 │   ├─ model/
 │   │   └─ IntroModel.ts
@@ -97,7 +139,7 @@ src/
 │       ├─ IntroScreenView.ts
 │       ├─ IntroScreenSummaryContent.ts
 │       └─ IntroKeyboardHelpContent.ts
-└─ lab-screen/
+└─ lab/
     ├─ LabScreen.ts
     ├─ model/
     │   └─ LabModel.ts
@@ -108,19 +150,25 @@ src/
 ```
 
 Each screen file follows the same `Screen<Model, View>` pattern as the
-existing `SimScreen.ts`. Screen icons live in one shared module under
+template's `SimScreen.ts`. Screen icons live in one shared module under
 `src/common/` (see [Home screen icons](#home-screen-icons)) — do **not** put
 a `*ScreenIcon.ts` next to each screen.
 
-### 4 — (Optional) Create a shared root model
+### Shared model
 
-If screens share state, create a top-level model before constructing screens:
+**Automated:** `npm run scaffold-screens -- --screens Intro,Lab --shared-model`
+writes `src/common/model/SharedModel.ts` and has each screen model compose
+`public readonly shared = new SharedModel()` (same pattern as ACPhasor's
+`RlcCircuitModel` / RotatingSky's `SkyModel`). Rename `SharedModel` to a domain
+noun when you know it.
+
+**Manual:** add a domain model under `common/model/` and compose it:
 
 ```typescript
-// src/model/FrictionModel.ts
-import { BooleanProperty, NumberProperty } from "scenerystack/axon";
+// src/common/model/FrictionSurface.ts
+import { NumberProperty, StringProperty } from "scenerystack/axon";
 
-export class FrictionModel {
+export class FrictionSurface {
   public readonly surfaceTypeProperty = new StringProperty("wood");
   public readonly normalForceProperty = new NumberProperty(10, { units: "N" });
 
@@ -131,15 +179,17 @@ export class FrictionModel {
 }
 ```
 
-Per-screen models then take it as a constructor argument:
+Per-screen models compose it (fleet default):
 
 ```typescript
-// src/intro-screen/model/IntroModel.ts
+// src/intro/model/IntroModel.ts
+import { FrictionSurface } from "../../common/model/FrictionSurface.js";
+
 export class IntroModel implements TModel {
-  public constructor(public readonly shared: FrictionModel) {}
+  public readonly surface = new FrictionSurface();
 
   public step(_dt: number): void { /* … */ }
-  public reset(): void { this.shared.reset(); }
+  public reset(): void { this.surface.reset(); }
 }
 ```
 
@@ -148,16 +198,13 @@ export class IntroModel implements TModel {
 ```typescript
 // src/main.ts  (inside onReadyToLaunch)
 
-// Shared model — created once, passed to both screens
-const frictionModel = new FrictionModel();
-
 const screens = [
-  new IntroScreen(frictionModel, {
+  new IntroScreen({
     name: stringManager.getScreenNames().introStringProperty,
     tandem: Tandem.ROOT.createTandem("introScreen"),
     backgroundColorProperty: SimColors.backgroundColorProperty,
   }),
-  new LabScreen(frictionModel, {
+  new LabScreen({
     name: stringManager.getScreenNames().labStringProperty,
     tandem: Tandem.ROOT.createTandem("labScreen"),
     backgroundColorProperty: SimColors.backgroundColorProperty,
@@ -166,6 +213,9 @@ const screens = [
 
 const sim = new Sim(stringManager.getTitleStringProperty(), screens, { … });
 ```
+
+Screen models own their composed `common/model/` helpers; `main.ts` only builds the
+`screens` array (unless you deliberately share one live instance — see above).
 
 ---
 
@@ -319,27 +369,33 @@ public getLabA11yStrings()   { return stringProperties.a11y.lab; }
 
 ### GitHub template repository
 
-The repository is configured as a GitHub template. Use the **"Use this
-template"** button on GitHub to create a new repository pre-populated with all
-template files. Then run:
+The repository is a GitHub **template**. Use the **"Use this template"** button
+on GitHub to create a new repository, then:
 
 ```sh
 npm install
 npm run rename -- --id my-sim --name "My Simulation"
+npm run scaffold-screens -- --screens Intro,Lab   # or omit --screens for one screen
 npm run check
 ```
 
-### `npm create` workflow (scaffold new projects)
+### Baton `create-sim` (recommended for agents / fleet)
 
-If your organisation maintains multiple sims, create an npm initializer that
-wraps the rename step:
+From the OpenPhysics workspace:
 
 ```sh
-npm create openphysics-sim@latest my-sim
-# → clones the template, runs npm run rename automatically
+Baton/scripts/create-sim.sh \
+  --repo MySim \
+  --name "My Simulation" \
+  --screens Intro,Lab \
+  --shared-model \
+  --onboard
 ```
 
-See `scripts/rename-sim.ts` for the rename logic you can reuse.
+Creates the GitHub repo from this template, clones it beside `Baton`, runs
+rename + scaffold-screens + check. `--onboard` finishes catalog, screenshot,
+WebP, Pages index, and the OpenPhysics README Layout row; add `--pr` to open
+follow-up PRs. See [`Baton/doc/add-simulation.md`](https://github.com/OpenPhysics/Baton/blob/main/doc/add-simulation.md).
 
 ### Monorepo / workspace setup
 
