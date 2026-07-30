@@ -1,6 +1,6 @@
-# Credits — TemplateSingleSim
+# Credits — SceneryStackTemplate
 
-Reusable single-screen SceneryStack simulation template with Vite, TypeScript, Biome, PWA support, and i18n scaffolding.
+Reusable SceneryStack simulation template (one or N screens) with Vite, TypeScript, Biome, PWA support, and i18n scaffolding.
 
 ## License
 

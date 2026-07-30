@@ -1,10 +1,10 @@
-# CLAUDE.md — Sim Template
+# CLAUDE.md — SceneryStack Template
 
 Sim-specific context for AI assistants. General SceneryStack guidance: [OpenPhysics/.github/CLAUDE.md](https://github.com/OpenPhysics/.github/blob/main/CLAUDE.md).
 
 ## Project
 
-Reusable single-screen SceneryStack template and **canonical accessibility reference** for
+Reusable SceneryStack template (one or N screens) and **canonical accessibility reference** for
 OpenPhysics sims. Prefer `Baton/scripts/create-sim.sh` (or GitHub **Use this template** +
 `npm run rename` + `npm run scaffold-screens`) to fork it. For multi-screen sims, see
 [`doc/multi-screen.md`](doc/multi-screen.md).
@@ -166,7 +166,7 @@ owns screen folders (fleet naming: `src/intro/`, not `intro-screen/`).
 
 ### Manual checklist (if not using the scripts)
 
-1. **Rename** — replace `sim-template` / `Sim Template` / `Sim` prefix in `init.ts`, `brand.ts`, `package.json`, Colors/Namespace/Preferences
+1. **Rename** — replace `scenerystack-template` / `SceneryStack Template` / `Sim` prefix in `init.ts`, `brand.ts`, `package.json`, Colors/Namespace/Preferences
 2. **Screens** — run `scaffold-screens` or mirror `sim-screen/` into kebab folders
 3. **Locale** — add `strings_XX.json`, register in `StringManager`, add locale to `init.ts` `availableLocales`
 4. **Icon** — edit `public/icons/icon.svg`, run `npm run icons`; match theme color in `index.html` / `vite.config.ts`

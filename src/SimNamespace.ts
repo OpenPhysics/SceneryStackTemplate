@@ -11,6 +11,6 @@
  */
 import { Namespace } from "scenerystack/phet-core";
 
-const SimNamespace = new Namespace("sim-template");
+const SimNamespace = new Namespace("scenerystack-template");
 
 export default SimNamespace;

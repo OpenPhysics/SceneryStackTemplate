@@ -79,14 +79,14 @@ const REPLACEMENTS: ReadonlyArray<[string, string]> = [
   // camelCase identifier
   ["simQueryParameters", `${newCamel}QueryParameters`],
   // Display strings (all locales + PWA)
-  ["Sim Template", newName],
+  ["SceneryStack Template", newName],
   ["Plantilla de Simulación", newName],
   ["Modèle de Simulation", newName],
   ["SimTemplate", newPrefix],
-  ["A SceneryStack single-screen simulation template.", `A SceneryStack simulation: ${newName}.`],
-  ["A single-screen SceneryStack simulation template", `A SceneryStack simulation: ${newName}`],
+  ["A SceneryStack simulation template for one or N screens.", `A SceneryStack simulation: ${newName}.`],
+  ["A SceneryStack simulation template for one or N screens", `A SceneryStack simulation: ${newName}`],
   // Kebab package id
-  ["sim-template", newId],
+  ["scenerystack-template", newId],
 ];
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -158,8 +158,8 @@ function collectRenames(dir: string, renameOps: RenameOp[]): void {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 console.log("\nRenaming sim template →", newName);
-console.log(`  id:     sim-template → ${newId}`);
-console.log(`  name:   Sim Template → ${newName}`);
+console.log(`  id:     scenerystack-template → ${newId}`);
+console.log(`  name:   SceneryStack Template → ${newName}`);
 console.log(`  prefix: Sim          → ${newPrefix}`);
 console.log(`  camel:  sim          → ${newCamel}`);
 console.log("  (screen packages left as sim-screen/ for scaffold-screens)");

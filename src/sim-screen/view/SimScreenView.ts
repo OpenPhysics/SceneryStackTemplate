@@ -51,7 +51,7 @@ export class SimScreenView extends ScreenView {
 
     // ── Placeholder label ─────────────────────────────────────────────────────
     // Replace this with your actual simulation content.
-    const placeholderText = new Text("Sim Template", {
+    const placeholderText = new Text("SceneryStack Template", {
       font: "bold 36px sans-serif",
       fill: SimColors.textColorProperty,
       center: this.layoutBounds.center,

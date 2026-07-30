@@ -1,4 +1,4 @@
-# Model - Sim Template
+# Model - SceneryStack Template
 
 This document describes the model (the underlying physics, math, and behavior) for the simulation, in
 terms appropriate for an educator. It is the companion to

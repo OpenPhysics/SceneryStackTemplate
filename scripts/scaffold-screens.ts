@@ -84,14 +84,14 @@ function parseScreens(raw: string | undefined): ScreenSpec[] {
       name?: string;
       description?: string;
     };
-    const id = pkg.name && pkg.name !== "sim-template" ? pkg.name : "sim";
+    const id = pkg.name && pkg.name !== "scenerystack-template" ? pkg.name : "sim";
     const titleGuess =
       // Prefer vite/html title already rewritten by rename
       (() => {
         try {
           const html = readFileSync(join(ROOT, "index.html"), "utf8");
           const m = html.match(/<title>([^<]+)<\/title>/);
-          if (m?.[1] && m[1] !== "Sim Template") {
+          if (m?.[1] && m[1] !== "SceneryStack Template") {
             return m[1].trim();
           }
         } catch {

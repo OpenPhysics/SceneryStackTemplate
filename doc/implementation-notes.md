@@ -1,12 +1,12 @@
-# Implementation Notes - Sim Template
+# Implementation Notes - SceneryStack Template
 
-Developer-facing notes on the **TemplateSingleSim** scaffold. **Replace and expand this file when
+Developer-facing notes on the **SceneryStackTemplate** scaffold. **Replace and expand this file when
 forking** to describe your sim's real architecture (see Stern Gerlach or Light Propagation for
 target quality). Until then, this documents what the template provides out of the box.
 
 ## Architecture Overview
 
-TemplateSingleSim is the fleet-canonical starting point for new single-screen SceneryStack sims.
+SceneryStackTemplate is the fleet-canonical starting point for new SceneryStack sims (one or N screens).
 It demonstrates Model–View separation, color profiles, localization, reset behavior, accessibility
 reference wiring, and reusable common components — **without** domain physics.
 

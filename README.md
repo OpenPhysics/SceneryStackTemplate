@@ -1,11 +1,11 @@
-# Sim Template
+# SceneryStack Template
 
-A reusable single-screen simulation template built with [SceneryStack](https://scenerystack.org/),
-Vite 8, TypeScript 7, and Biome 2.
+A reusable SceneryStack simulation template for one or N screens, built with
+[SceneryStack](https://scenerystack.org/), Vite 8, TypeScript 7, and Biome 2.
 
 ## Features
 
-- Single-screen SceneryStack scaffold with model/view separation
+- SceneryStack scaffold with model/view separation (`rename` + `scaffold-screens` for one or N screens)
 - English, Spanish, and French localization via `StringManager`
 - Default and projector color profiles
 - Progressive Web App (installable, offline-capable)

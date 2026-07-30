@@ -421,7 +421,7 @@ To pull template improvements back into an existing fork:
 
 ```sh
 # One-time: add the template as a remote
-git remote add template https://github.com/OpenPhysics/TemplateSingleSim.git
+git remote add template https://github.com/OpenPhysics/SceneryStackTemplate.git
 
 # Pull template changes into a branch for review
 git fetch template
