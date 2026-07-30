@@ -30,9 +30,16 @@ The scaffolder:
 3. Updates `main.ts`, locale JSON (`screens` + nested `a11y`), and `StringManager`
 4. Removes the prototype `sim-screen/` folder
 
+Then always:
+
+```sh
+npm run fix     # the emitted/renamed imports need Biome's organizeImports pass
+npm run check
+```
+
 Independent models by default. Pass `--shared-model` to emit
 `src/common/model/SharedModel.ts` and compose it into each screen model
-(see [Shared model](#shared-model) below).
+(see [Shared model](#4--shared-model) below).
 
 ---
 
@@ -154,7 +161,7 @@ template's `SimScreen.ts`. Screen icons live in one shared module under
 `src/common/` (see [Home screen icons](#home-screen-icons)) — do **not** put
 a `*ScreenIcon.ts` next to each screen.
 
-### Shared model
+### 4 — Shared model
 
 **Automated:** `npm run scaffold-screens -- --screens Intro,Lab --shared-model`
 writes `src/common/model/SharedModel.ts` and has each screen model compose
@@ -376,8 +383,12 @@ on GitHub to create a new repository, then:
 npm install
 npm run rename -- --id my-sim --name "My Simulation"
 npm run scaffold-screens -- --screens Intro,Lab   # or omit --screens for one screen
+npm run fix
 npm run check
 ```
+
+`rename` picks up `repository.url` from your `origin` remote; if you cloned the template
+directly rather than using **Use this template**, set it in `package.json` by hand.
 
 ### Baton `create-sim` (recommended for agents / fleet)
 

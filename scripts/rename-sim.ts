@@ -2,10 +2,11 @@
 /**
  * scripts/rename-sim.ts
  *
- * Renames the sim template for a new simulation at the **sim** level
- * (package id, display name, Colors/Namespace/Preferences). Screen packages
- * stay as `src/sim-screen/` with `Sim*` class names so
+ * Renames the sim template for a new simulation at the **sim** level (package id and
+ * metadata, display name, Colors/Constants/Namespace/Panel/ButtonOptions/Preferences).
+ * Screen packages stay as `src/sim-screen/` with `Sim*` class names so
  * `npm run scaffold-screens` can emit N fleet-named screen folders afterward.
+ * No `Sim*` identifier should survive both steps.
  *
  * Usage:
  *   npm run rename -- --id <kebab-id> --name "<Display Name>"
@@ -23,9 +24,11 @@
  *
  * After running:
  *   npm run scaffold-screens -- --screens Intro,Lab   ← or omit for single screen
+ *   npm run fix
  *   npm run check
  */
 
+import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -59,6 +62,12 @@ const newPrefix =
 // camelCase prefix: "WaveInterference" → "waveInterference"
 const newCamel = newPrefix.charAt(0).toLowerCase() + newPrefix.slice(1);
 
+// SCREAMING_SNAKE prefix: "WaveInterference" → "WAVE_INTERFERENCE"
+const newSnake = newPrefix
+  .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+  .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+  .toUpperCase();
+
 const ROOT = resolve(process.cwd());
 
 // ── Skip lists ────────────────────────────────────────────────────────────────
@@ -74,10 +83,16 @@ const REPLACEMENTS: ReadonlyArray<[string, string]> = [
   // Shared / preferences (not per-screen)
   ["SimPreferencesModel", `${newPrefix}PreferencesModel`],
   ["SimPreferencesNode", `${newPrefix}PreferencesNode`],
+  ["SimButtonOptions", `${newPrefix}ButtonOptions`],
+  ["SimControlPanel", `${newPrefix}ControlPanel`],
+  ["SimConstants", `${newPrefix}Constants`],
   ["SimColors", `${newPrefix}Colors`],
   ["SimNamespace", `${newPrefix}Namespace`],
+  ["SimPanel", `${newPrefix}Panel`],
   // camelCase identifier
   ["simQueryParameters", `${newCamel}QueryParameters`],
+  // SCREAMING_SNAKE identifier
+  ["SIM_COMBO_BOX_OPTIONS", `${newSnake}_COMBO_BOX_OPTIONS`],
   // Display strings (all locales + PWA)
   ["SceneryStack Template", newName],
   ["Plantilla de Simulación", newName],
@@ -108,6 +123,59 @@ function applyReplacements(text: string): string {
 function fileExtension(filename: string): string {
   const dot = filename.lastIndexOf(".");
   return dot !== -1 ? filename.slice(dot) : "";
+}
+
+/** `git@github.com:Org/Repo.git` / `https://github.com/Org/Repo` → `https://github.com/Org/Repo.git` */
+function normalizeRemoteUrl(url: string): string {
+  const https = url.replace(/^git@([^:]+):/, "https://$1/");
+  return https.endsWith(".git") ? https : `${https}.git`;
+}
+
+/** Origin remote of the current checkout, or undefined when there is none. */
+function originUrl(): string | undefined {
+  try {
+    const url = execFileSync("git", ["remote", "get-url", "origin"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return url === "" ? undefined : normalizeRemoteUrl(url);
+  } catch {
+    return undefined;
+  }
+}
+
+// ── package.json fields that are not plain string substitutions ────────────────
+
+/**
+ * `description`, `keywords`, and `repository.url` describe the template itself, so
+ * substitution cannot fix them. The repo URL comes from the origin remote — that is
+ * correct both for a "Use this template" clone and for Baton's create-sim.sh.
+ */
+function updatePackageJson(): void {
+  const path = join(ROOT, "package.json");
+  const pkg = JSON.parse(readFileSync(path, "utf8")) as {
+    description?: string;
+    keywords?: string[];
+    repository?: { type?: string; url?: string };
+  };
+
+  pkg.description = `A SceneryStack simulation: ${newName}.`;
+  if (pkg.keywords) {
+    pkg.keywords = pkg.keywords.filter((k) => k !== "template");
+  }
+
+  const remote = originUrl();
+  const isTemplateRemote = remote?.endsWith("/SceneryStackTemplate.git") ?? true;
+  if (remote && !isTemplateRemote && pkg.repository) {
+    pkg.repository.url = remote;
+  }
+
+  writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
+  console.log("  updated  package.json  (description, keywords, repository.url)");
+  if (isTemplateRemote) {
+    console.warn("  note: origin still points at the template — set package.json repository.url by hand");
+  }
 }
 
 // ── Pass 1: update file contents ──────────────────────────────────────────────
@@ -162,13 +230,17 @@ console.log(`  id:     scenerystack-template → ${newId}`);
 console.log(`  name:   SceneryStack Template → ${newName}`);
 console.log(`  prefix: Sim          → ${newPrefix}`);
 console.log(`  camel:  sim          → ${newCamel}`);
+console.log(`  snake:  SIM_         → ${newSnake}_`);
 console.log("  (screen packages left as sim-screen/ for scaffold-screens)");
 console.log("");
 
 console.log("Pass 1: updating file contents…");
 processContents(ROOT);
 
-console.log("\nPass 2: renaming files and directories…");
+console.log("\nPass 2: package.json metadata…");
+updatePackageJson();
+
+console.log("\nPass 3: renaming files and directories…");
 const ops: RenameOp[] = [];
 collectRenames(ROOT, ops);
 for (const { from, to } of ops) {
@@ -180,6 +252,7 @@ console.log("\nDone.");
 console.log("\nNext steps:");
 console.log("  1. npm run scaffold-screens -- --screens Intro,Lab");
 console.log("     (omit --screens to use one screen named after the sim)");
-console.log("  2. npm run check");
-console.log("  3. git diff --stat");
-console.log("  4. Update doc/implementation-notes.md for your simulation.");
+console.log("  2. npm run fix     (renamed imports need Biome's organizeImports pass)");
+console.log("  3. npm run check");
+console.log("  4. git diff --stat");
+console.log("  5. Update doc/implementation-notes.md for your simulation.");

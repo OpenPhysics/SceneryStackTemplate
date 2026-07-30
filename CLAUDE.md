@@ -26,7 +26,7 @@ OpenPhysics sims. Prefer `Baton/scripts/create-sim.sh` (or GitHub **Use this tem
 | `src/common/SimButtonOptions.ts` | Flat button-appearance option bundles + light-control-surface combo-box options |
 | `src/common/TimeModel.ts` | Composable play/pause + elapsed-time model for animated sims |
 | `scripts/generate-icons.ts` | PNG icons from `public/icons/icon.svg` |
-| `scripts/rename-sim.ts` | Sim-level fork/rename (package id, Colors, Preferences) |
+| `scripts/rename-sim.ts` | Sim-level fork/rename (package id + metadata, Colors, Constants, Panel, ButtonOptions, Preferences) |
 | `scripts/scaffold-screens.ts` | Emit N screen packages + wire main/strings/icons |
 
 ## Common components
@@ -158,15 +158,18 @@ npm install
 npm run rename -- --id friction --name "Friction"
 npm run scaffold-screens -- --screens Intro,Lab --shared-model
 # omit --screens for one screen named after the sim; omit --shared-model for independent models
+npm run fix     # required: both scripts reorder imports, which Biome then sorts
 npm run check
 ```
 
-`rename` updates package id, display name, Colors/Namespace/Preferences. `scaffold-screens`
-owns screen folders (fleet naming: `src/intro/`, not `intro-screen/`).
+`rename` updates package id and metadata, display name, and every sim-level `Sim*`
+(Colors, Constants, Namespace, Panel, ButtonOptions, Preferences, query parameters).
+`scaffold-screens` owns screen folders (fleet naming: `src/intro/`, not `intro-screen/`).
+After both steps no `Sim*` identifier should remain — `grep -rn '\bSim[A-Z_]' src` to confirm.
 
 ### Manual checklist (if not using the scripts)
 
-1. **Rename** — replace `scenerystack-template` / `SceneryStack Template` / `Sim` prefix in `init.ts`, `brand.ts`, `package.json`, Colors/Namespace/Preferences
+1. **Rename** — replace `scenerystack-template` / `SceneryStack Template` / `Sim` prefix in `init.ts`, `brand.ts`, `package.json` (name, description, keywords, repository.url), Colors/Constants/Namespace/Panel/ButtonOptions/Preferences
 2. **Screens** — run `scaffold-screens` or mirror `sim-screen/` into kebab folders
 3. **Locale** — add `strings_XX.json`, register in `StringManager`, add locale to `init.ts` `availableLocales`
 4. **Icon** — edit `public/icons/icon.svg`, run `npm run icons`; match theme color in `index.html` / `vite.config.ts`

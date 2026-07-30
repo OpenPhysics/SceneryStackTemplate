@@ -4,7 +4,8 @@
  *
  * Emits N screen packages from the template's `src/sim-screen/` prototype
  * (fleet folder naming: `src/intro/`, not `intro-screen/`), wires main.ts,
- * StringManager, locale JSON, and a stub `{Prefix}ScreenIcons.ts` module.
+ * StringManager, locale JSON, and a stub `{Prefix}ScreenIcons.ts` module, then
+ * repoints CLAUDE.md / README.md / doc/*.md at the emitted screens.
  *
  * Run after `npm run rename` (create-sim always does both). Safe on a pristine
  * template too (prefix stays `Sim`).
@@ -190,6 +191,13 @@ function transformPrototype(text: string, screen: ScreenSpec, simPrefix: string)
   for (const [from, to] of pairs) {
     out = replaceAll(out, from, to);
   }
+  // The prototype header tells the reader to run scaffold-screens; in emitted screens that
+  // advice is stale, so point at main.ts and the shared icon module instead.
+  out = out.replace(
+    / \* For multi-screen simulations, run `npm run scaffold-screens` \(preferred\) or\n \* duplicate this file \(e\.g\. IntroScreen\.ts, LabScreen\.ts\), add each screen to the\n \* screens array in src\/main\.ts, and put shared create\*Icon\(\) factories in\n \* src\/common\/\{SimName\}ScreenIcons\.ts \(see doc\/multi-screen\.md\)\.\n/,
+    ` * Registered in the screens array in src/main.ts. Its home-screen and navigation-bar\n * icons come from create${screen.pascal}Icon() in src/common/${simPrefix}ScreenIcons.ts\n * (see doc/multi-screen.md).\n`,
+  );
+
   // Placeholder label: prefer screen title over leftover sim title
   out = out.replace(
     /new Text\("([^"]*)", \{/,
@@ -362,11 +370,15 @@ function updateLocaleFiles(screens: ScreenSpec[]): void {
     };
 
     const flatA11y = json.a11y;
-    const nestedKeys = Object.keys(flatA11y);
-    const isAlreadyNested = screens.every((s) => flatA11y[s.key] !== undefined);
-    const firstNestedKey = nestedKeys[0];
-    const templateA11y =
-      isAlreadyNested && firstNestedKey !== undefined
+    // Detect the shape structurally: the single-screen prototype has screenSummary at the
+    // top level, a scaffolded sim has it one level down under each screen key. Never infer
+    // from the requested screen keys — a screen named "Controls" collides with the
+    // prototype's a11y.controls block and would nest the wrong subtree.
+    const isFlat = Object.hasOwn(flatA11y, "screenSummary");
+    const firstNestedKey = Object.keys(flatA11y)[0];
+    const templateA11y = isFlat
+      ? flatA11y
+      : firstNestedKey !== undefined
         ? (flatA11y[firstNestedKey] as Record<string, unknown>)
         : flatA11y;
 
@@ -496,6 +508,75 @@ ${screenEntries}
 }
 
 /**
+ * Docs shipped with the template point at the `sim-screen/` prototype and its `Sim*`
+ * classes, which no longer exist once screens are emitted. Rewrite those references to
+ * the first screen (as the fleet forks did by hand) so no `Sim*` name survives the fork.
+ */
+function updateDocs(screens: ScreenSpec[], simPrefix: string): void {
+  const first = screens[0];
+  if (!first) {
+    return;
+  }
+  const docDir = join(ROOT, "doc");
+  const paths = [join(ROOT, "CLAUDE.md"), join(ROOT, "README.md")];
+  if (existsSync(docDir)) {
+    for (const entry of readdirSync(docDir)) {
+      if (entry.endsWith(".md")) {
+        paths.push(join(docDir, entry));
+      }
+    }
+  }
+
+  // Longest names first so shorter ones do not eat their prefixes.
+  const pairs: Array<[string, string]> = [
+    ["src/sim-screen", `src/${first.kebab}`],
+    ["sim-screen/", `${first.kebab}/`],
+    ["SimScreenSummaryContent", `${first.pascal}ScreenSummaryContent`],
+    ["SimKeyboardHelpContent", `${first.pascal}KeyboardHelpContent`],
+    ["SimScreenView", `${first.pascal}ScreenView`],
+    ["SimScreenOptions", `${first.pascal}ScreenOptions`],
+    ["SimScreen", `${first.pascal}Screen`],
+    ["SimModel", `${first.pascal}Model`],
+    ["getA11yStrings()", `get${first.pascal}A11yStrings()`],
+    ["{SimName}ScreenIcons", `${simPrefix}ScreenIcons`],
+  ];
+
+  // Template-only prose in doc/multi-screen.md: token substitution alone would leave a
+  // fork claiming to ship an un-scaffolded prototype.
+  const screenList = screens.map((s) => `\`src/${s.kebab}/\``).join(", ");
+  const prose: Array<[string, string]> = [
+    [
+      "This template ships as a **single-screen** prototype (`src/sim-screen/`). New sims\nshould call `npm run scaffold-screens` (or `Baton/scripts/create-sim.sh`) so screen\nfolders use fleet naming (`src/intro/`, not `intro-screen/`). This guide covers the\narchitecture and how to extend an existing sim by hand.",
+      `This sim was scaffolded by \`npm run scaffold-screens\` into ${screenList} (fleet naming:\nkebab folders with no \`-screen\` suffix). This guide covers the architecture and how to add\nanother screen by hand.`,
+    ],
+    [
+      "## Automated scaffold (preferred)\n\nAfter `npm run rename` (or via `create-sim.sh`):",
+      "## Automated scaffold (preferred)\n\nAlready run for this sim — the prototype folder is gone, so a second run exits early.\nKept as reference for the next sim:",
+    ],
+  ];
+
+  for (const path of paths) {
+    if (!existsSync(path)) {
+      continue;
+    }
+    const original = readFileSync(path, "utf8");
+    let text = original;
+    if (basename(path) === "multi-screen.md") {
+      for (const [from, to] of prose) {
+        text = replaceAll(text, from, to);
+      }
+    }
+    for (const [from, to] of pairs) {
+      text = replaceAll(text, from, to);
+    }
+    if (text !== original) {
+      writeFileSync(path, text, "utf8");
+      console.log(`  updated  ${relative(ROOT, path)}`);
+    }
+  }
+}
+
+/**
  * Fleet pattern (ACPhasor RlcCircuitModel, RotatingSky SkyModel, MotionsOfTheSun
  * TimeMaster): domain helpers live under common/model/ and each screen model
  * composes its own instance. Rename SharedModel to a domain noun when you know it.
@@ -602,12 +683,20 @@ function main(): void {
   }
   updateMain(screenList, prefix);
 
+  console.log("\nRewriting docs that referenced the prototype…");
+  updateDocs(screenList, prefix);
+
   console.log("\nRemoving prototype screen package…");
   rmSync(protoDir, { recursive: true, force: true });
   console.log(`  removed  ${relative(ROOT, protoDir)}`);
 
   console.log("\nDone.");
-  console.log("  npm run check");
+  console.log("\nNext steps:");
+  console.log("  1. npm run fix     (emitted imports need Biome's organizeImports pass)");
+  console.log("  2. npm run check");
+  if (screenList.length > 1) {
+    console.log(`  3. docs now reference the ${screenList[0]?.title} screen only — tailor them for all screens`);
+  }
 }
 
 main();
