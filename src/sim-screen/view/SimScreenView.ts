@@ -20,26 +20,31 @@
  *   center, minX, maxX, minY, maxY, width, height
  */
 
+import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { Node, Rectangle, Text } from "scenerystack/scenery";
 import { ResetAllButton } from "scenerystack/scenery-phet";
-import type { ScreenViewOptions } from "scenerystack/sim";
-import { ScreenView } from "scenerystack/sim";
+import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { FLAT_RESET_ALL_BUTTON_OPTIONS } from "../../common/SimButtonOptions.js";
 import SimColors from "../../SimColors.js";
 import { SCREEN_VIEW_MARGIN } from "../../SimConstants.js";
 import type { SimModel } from "../model/SimModel.js";
 import { SimScreenSummaryContent } from "./SimScreenSummaryContent.js";
 
+export type SimScreenViewOptions = ScreenViewOptions;
+
 export class SimScreenView extends ScreenView {
-  public constructor(model: SimModel, options?: ScreenViewOptions) {
+  public constructor(model: SimModel, providedOptions?: SimScreenViewOptions) {
     // ── Accessibility: screen summary ───────────────────────────────────────────
     // The screen summary is the first thing a screen-reader user encounters. It
     // is registered here, in the ScreenView's super() options, so every sim wires
     // it the same way. See SimScreenSummaryContent for the four content regions.
-    super({
-      screenSummaryContent: new SimScreenSummaryContent(model),
-      ...options,
-    });
+    const options = optionize<SimScreenViewOptions, EmptySelfOptions, ScreenViewOptions>()(
+      {
+        screenSummaryContent: new SimScreenSummaryContent(model),
+      },
+      providedOptions,
+    );
+    super(options);
 
     // ── Background ────────────────────────────────────────────────────────────
     // A full-screen rectangle that follows the active color profile.
