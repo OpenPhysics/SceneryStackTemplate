@@ -124,4 +124,36 @@ export class SimScreenView extends ScreenView {
   public override step(_dt: number): void {
     // TODO: implement animation updates here
   }
+
+  // ── Accessibility / listeners: dispose ─────────────────────────────────────
+  // ScreenView is `isDisposable: false` and lives for the whole sim, so this
+  // class rarely needs dispose(). Child Nodes (and a live currentDetails
+  // DerivedProperty you own on a short-lived object) do. When you add
+  // DerivedProperty / Multilink / Property.link against model state, keep the
+  // references and tear them down — forks copy what they see. Pattern:
+  //
+  // private readonly disposeSimScreenView: () => void;
+  //
+  // // in the constructor, after creating the listeners:
+  // const statusMultilink = Multilink.multilink(
+  //   [model.someProperty, model.otherProperty],
+  //   (a, b) => { /* update view from model */ },
+  // );
+  // const detailsProperty = new DerivedProperty(
+  //   [model.stateProperty],
+  //   (state) => `State: ${state}`,
+  // ); // → pass as currentDetailsContent in SimScreenSummaryContent
+  // const onExternal = (v: number) => { /* … */ };
+  // model.externalProperty.link(onExternal); // Property you do NOT own
+  //
+  // this.disposeSimScreenView = () => {
+  //   statusMultilink.dispose();                 // Multilink you created
+  //   detailsProperty.dispose();                 // DerivedProperty you created
+  //   model.externalProperty.unlink(onExternal); // undo external link
+  // };
+  //
+  // public override dispose(): void {
+  //   this.disposeSimScreenView();
+  //   super.dispose();
+  // }
 }

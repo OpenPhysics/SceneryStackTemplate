@@ -3,14 +3,28 @@
  *
  * Content for the keyboard-help dialog (the "?" button in the navigation bar).
  * The template's only interactions are buttons and Reset All, so a single
- * basic-actions section covers the available keyboard controls. Add a slider or
- * combo-box section here as the simulation grows.
+ * basic-actions section covers the available keyboard controls. When the sim
+ * grows, fill the right column (pattern stubbed below).
  */
 
-import { BasicActionsKeyboardHelpSection, TwoColumnKeyboardHelpContent } from "scenerystack/scenery-phet";
+import {
+  BasicActionsKeyboardHelpSection,
+  // SliderControlsKeyboardHelpSection,
+  // TimeControlsKeyboardHelpSection,
+  TwoColumnKeyboardHelpContent,
+} from "scenerystack/scenery-phet";
 
 export class SimKeyboardHelpContent extends TwoColumnKeyboardHelpContent {
   public constructor() {
-    super([new BasicActionsKeyboardHelpSection()], []);
+    const leftColumn = [new BasicActionsKeyboardHelpSection()];
+
+    // Right column — uncomment when the sim adds sliders and/or TimeControlNode:
+    // const rightColumn = [
+    //   new SliderControlsKeyboardHelpSection(),
+    //   // new TimeControlsKeyboardHelpSection(),
+    // ];
+    const rightColumn: never[] = [];
+
+    super(leftColumn, rightColumn);
   }
 }

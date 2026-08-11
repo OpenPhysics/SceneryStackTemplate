@@ -18,6 +18,8 @@
  * real sim, build a DerivedProperty over the relevant model Properties and pass
  * it as `currentDetailsContent` so the paragraph updates as the sim runs.
  * See LunarLander/src/.../LunarLanderScreenSummaryContent.ts for the pattern.
+ * If that DerivedProperty (or any Multilink) is owned by a short-lived object,
+ * dispose it on teardown — see the commented dispose() stub in SimScreenView.
  */
 import { ScreenSummaryContent } from "scenerystack/sim";
 import { StringManager } from "../../i18n/StringManager.js";

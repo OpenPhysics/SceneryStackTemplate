@@ -77,9 +77,18 @@ const TEXT_EXTS = new Set([".ts", ".js", ".json", ".html", ".md", ".css", ".svg"
 
 // ── Content replacements ──────────────────────────────────────────────────────
 // Sim-level only. Screen classes (SimScreen, SimModel, …) and `sim-screen/` are
-// left for scaffold-screens. Longer strings must come first to avoid partial matches.
+// left for scaffold-screens.
+//
+// INVARIANT — order + token length:
+//   1. Never add a bare "Sim" (or "sim" / "SIM") → prefix replacement. Overlapping
+//      prefixes (SimColors, SimConstants, …) would be corrupted by a short token.
+//   2. Class / identifier tokens use `\b`-bounded regex so a future short token
+//      cannot match inside a longer identifier even if order slips.
+//   3. Display / package strings stay plain substring replaces (longest first).
+//   4. Keep identifier entries longest-first as defense in depth.
 
-const REPLACEMENTS: ReadonlyArray<[string, string]> = [
+/** Identifier tokens: search is matched with word boundaries (`\b…\b`). */
+const IDENTIFIER_REPLACEMENTS: ReadonlyArray<[string, string]> = [
   // Shared / preferences (not per-screen)
   ["SimPreferencesModel", `${newPrefix}PreferencesModel`],
   ["SimPreferencesNode", `${newPrefix}PreferencesNode`],
@@ -93,7 +102,10 @@ const REPLACEMENTS: ReadonlyArray<[string, string]> = [
   ["simQueryParameters", `${newCamel}QueryParameters`],
   // SCREAMING_SNAKE identifier
   ["SIM_COMBO_BOX_OPTIONS", `${newSnake}_COMBO_BOX_OPTIONS`],
-  // Display strings (all locales + PWA)
+];
+
+/** Display / package strings: plain substring replace (longest first). */
+const STRING_REPLACEMENTS: ReadonlyArray<[string, string]> = [
   ["SceneryStack Template", newName],
   ["Plantilla de Simulación", newName],
   ["Modèle de Simulation", newName],
@@ -106,13 +118,22 @@ const REPLACEMENTS: ReadonlyArray<[string, string]> = [
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function replaceAll(str: string, search: string, replacement: string): string {
   return str.split(search).join(replacement);
 }
 
 function applyReplacements(text: string): string {
   let result = text;
-  for (const [search, replacement] of REPLACEMENTS) {
+  for (const [search, replacement] of IDENTIFIER_REPLACEMENTS) {
+    if (search !== replacement) {
+      result = result.replace(new RegExp(`\\b${escapeRegExp(search)}\\b`, "g"), replacement);
+    }
+  }
+  for (const [search, replacement] of STRING_REPLACEMENTS) {
     if (search !== replacement) {
       result = replaceAll(result, search, replacement);
     }

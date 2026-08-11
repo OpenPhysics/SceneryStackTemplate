@@ -1,5 +1,7 @@
 # SceneryStack Template
 
+[![CI](https://github.com/OpenPhysics/SceneryStackTemplate/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenPhysics/SceneryStackTemplate/actions/workflows/ci.yml)
+
 A reusable SceneryStack simulation template for one or N screens, built with
 [SceneryStack](https://scenerystack.org/), Vite 8, TypeScript 7, and Biome 2.
 
@@ -37,7 +39,10 @@ npm start        # dev server → http://localhost:5173
 | `npm run icons` | Regenerate PNG icons from `public/icons/icon.svg` |
 | `npm run rename` | Sim-level fork/rename (`--id`, `--name`) |
 | `npm run scaffold-screens` | Emit N fleet-named screen packages from `sim-screen/` (`--shared-model` optional) |
+| `npm run release` | `check && lint && build`, then version patch + push tags |
 | `npm run clean` | Remove `dist/` |
+
+`npm run release` intentionally skips `npm test` — template tests are samples. Real sims should append `&& npm test` (before the version bump) so a release cannot ship a failing suite.
 
 New sims start at `version: "0.0.0"` in `package.json`. Bump only when cutting a release (for example `npm version patch` and a matching git tag). Keep `name` in kebab-case; it is separate from the SceneryStack sim identifier in `src/init.ts`.
 
