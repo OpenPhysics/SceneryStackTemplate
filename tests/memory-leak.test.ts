@@ -18,7 +18,7 @@ import { TimeModel } from "../src/common/TimeModel.js";
  * can exceed the Vitest testTimeout — always pass refs when you have them.
  */
 async function forceGC(earlyExitRefs?: WeakRef<object> | readonly WeakRef<object>[]): Promise<void> {
-  const refs = Array.isArray(earlyExitRefs) ? earlyExitRefs : earlyExitRefs !== undefined ? [earlyExitRefs] : [];
+  const refs = earlyExitRefs === undefined ? [] : Array.isArray(earlyExitRefs) ? earlyExitRefs : [earlyExitRefs];
   for (let i = 0; i < 15; i++) {
     globalThis.gc?.();
     await new Promise<void>((r) => setTimeout(r, 50));
