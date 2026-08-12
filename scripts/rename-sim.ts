@@ -29,7 +29,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 // ── Argument parsing ──────────────────────────────────────────────────────────
@@ -202,15 +202,14 @@ function updatePackageJson(): void {
 // ── Pass 1: update file contents ──────────────────────────────────────────────
 
 function processContents(dir: string): void {
-  for (const entry of readdirSync(dir)) {
-    if (SKIP_DIRS.has(entry)) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (SKIP_DIRS.has(entry.name)) {
       continue;
     }
-    const full = join(dir, entry);
-    const stat = statSync(full);
-    if (stat.isDirectory()) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
       processContents(full);
-    } else if (TEXT_EXTS.has(fileExtension(entry))) {
+    } else if (entry.isFile() && TEXT_EXTS.has(fileExtension(entry.name))) {
       const original = readFileSync(full, "utf8");
       const transformed = applyReplacements(original);
       if (transformed !== original) {
@@ -229,16 +228,16 @@ interface RenameOp {
 }
 
 function collectRenames(dir: string, renameOps: RenameOp[]): void {
-  for (const entry of readdirSync(dir)) {
-    if (SKIP_DIRS.has(entry)) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (SKIP_DIRS.has(entry.name)) {
       continue;
     }
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
       collectRenames(full, renameOps);
     }
-    const newEntry = applyReplacements(entry);
-    if (newEntry !== entry) {
+    const newEntry = applyReplacements(entry.name);
+    if (newEntry !== entry.name) {
       renameOps.push({ from: full, to: join(dir, newEntry) });
     }
   }
