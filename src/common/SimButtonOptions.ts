@@ -31,6 +31,16 @@ export const SIM_COMBO_BOX_OPTIONS = {
 /** Options for RectangularPushButton and NumberControl arrow buttons. */
 export const FLAT_RECTANGULAR_BUTTON_OPTIONS = FLAT_BUTTON_APPEARANCE_OPTIONS;
 
+/**
+ * Flat push button on a dark panel: white chrome with dark labels.
+ * Spread into `RectangularPushButton` together with `content` that uses
+ * {@link LIGHT_SURFACE_TEXT_FILL}.
+ */
+export const FLAT_PANEL_PUSH_BUTTON_OPTIONS = {
+  ...FLAT_BUTTON_APPEARANCE_OPTIONS,
+  baseColor: SimColors.controlSurfaceColorProperty,
+} as const;
+
 /** Options for ResetAllButton (extends RoundPushButton). */
 export const FLAT_RESET_ALL_BUTTON_OPTIONS = FLAT_BUTTON_APPEARANCE_OPTIONS;
 
