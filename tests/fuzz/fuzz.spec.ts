@@ -2,14 +2,22 @@
  * Optional Playwright fuzz smoke for the SceneryStack template.
  *
  * Usage:
- *   npm run test:fuzz
- *   npm run test:fuzz:quick
+ *   npm run test:fuzz                 # default 30s
+ *   npm run test:fuzz:quick           # 10s
+ *   npm run test:fuzz:long            # 300s
+ *   npm run test:fuzz -- 90           # 90s
+ *   npm run test:fuzz -- --duration 90
+ *   FUZZ_DURATION=90 npm run test:fuzz
  *   FUZZ_SEED=12345 npm run test:fuzz
+ *
+ * `?ea` is required: without it assertions are silent and the test cannot fail
+ * on an invalid internal state.
  */
 
 import { expect, test } from "@playwright/test";
 
-const FUZZ_DURATION: number = parseInt(process.env["FUZZ_DURATION"] || "15", 10) * 1000;
+const FUZZ_DURATION_SECONDS: number = parseInt(process.env["FUZZ_DURATION"] || "30", 10);
+const FUZZ_DURATION: number = FUZZ_DURATION_SECONDS * 1000;
 const FUZZ_SEED: string = process.env["FUZZ_SEED"] || Math.floor(Math.random() * 1_000_000).toString();
 const FUZZ_RATE: string = process.env["FUZZ_RATE"] || "100";
 const FUZZ_POINTERS: string = process.env["FUZZ_POINTERS"] || "1";
@@ -23,11 +31,12 @@ interface ConsoleMessage {
 
 test.describe("Fuzz Testing", () => {
   test("should run without console errors", async ({ page }) => {
+    test.setTimeout(FUZZ_DURATION + 120_000);
     const errors: ConsoleMessage[] = [];
     const assertions: ConsoleMessage[] = [];
     const startTime = Date.now();
 
-    const fuzzUrl = `/?fuzz&randomSeed=${FUZZ_SEED}&fuzzRate=${FUZZ_RATE}&fuzzPointers=${FUZZ_POINTERS}`;
+    const fuzzUrl = `/?fuzz&ea&randomSeed=${FUZZ_SEED}&fuzzRate=${FUZZ_RATE}&fuzzPointers=${FUZZ_POINTERS}`;
 
     page.on("console", (msg) => {
       const type = msg.type();

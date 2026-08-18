@@ -30,8 +30,10 @@ npm start        # dev server → http://localhost:5173
 | `npm run build` | Type-check + production build → `dist/` |
 | `npm run preview` | Preview the production build locally |
 | `npm test` | Run Vitest unit tests (includes memory-leak suite) |
-| `npm run test:fuzz` | Optional Playwright fuzz smoke (`?fuzz`, default 15s) |
+| `npm run test:fuzz` | Optional Playwright fuzz smoke (`?fuzz&ea`, default 30s) |
+| `npm run test:fuzz -- 90` | Same fuzz for 90 seconds (`--duration 90` or `FUZZ_DURATION=90` also work) |
 | `npm run test:fuzz:quick` | Shorter fuzz smoke (10s) |
+| `npm run test:fuzz:long` | Longer fuzz smoke (300s) |
 | `npm run check` | TypeScript type check |
 | `npm run lint` | Biome lint check |
 | `npm run format` | Auto-format all files |

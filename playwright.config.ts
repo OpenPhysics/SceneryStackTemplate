@@ -4,9 +4,11 @@
 
 import { defineConfig } from "@playwright/test";
 
+const fuzzSeconds = Math.max(1, parseInt(process.env["FUZZ_DURATION"] || "30", 10) || 30);
+
 export default defineConfig({
   testDir: "./tests/fuzz",
-  timeout: 5 * 60 * 1000,
+  timeout: (fuzzSeconds + 120) * 1000,
   expect: {
     timeout: 10_000,
   },

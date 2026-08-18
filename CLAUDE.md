@@ -134,7 +134,8 @@ Fleet-standard Vitest layout (keep when forking):
 - Run `npm test`. CI runs the suite when a `test` script is present.
 - Expand `memory-leak.test.ts` for any component that adds/removes nodes or links Properties at
   runtime (see OpticsLab for a deep suite).
-- Optional: `npm run test:fuzz` / `test:fuzz:quick` (not part of default CI).
+- Optional: `npm run test:fuzz` / `test:fuzz:quick` / `test:fuzz:long` (not part of default CI).
+  Duration is 30s by default; override with `npm run test:fuzz -- 90` or `FUZZ_DURATION=90`.
 
 ## Commands
 
@@ -150,8 +151,9 @@ npm run lint && npm run check && npm run build && npm test
 | `npm run check` | TypeScript (`tsc --noEmit` + scripts project) |
 | `npm run lint` / `npm run fix` | Biome check / auto-fix |
 | `npm test` | Vitest unit tests |
-| `npm run test:fuzz` | Playwright fuzz smoke |
+| `npm run test:fuzz` | Playwright fuzz smoke (`?fuzz&ea`, 30s; `npm run test:fuzz -- 90` to change) |
 | `npm run test:fuzz:quick` | 10s fuzz |
+| `npm run test:fuzz:long` | 300s fuzz |
 | `npm run icons` | Regenerate PWA icons (+ placeholder screenshots) |
 | `npm run rename` | Sim-level fork/rename (`--id`, `--name`) |
 | `npm run scaffold-screens` | Emit N screens (`--screens Intro,Lab`) |
